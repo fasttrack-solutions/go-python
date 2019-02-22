@@ -42,13 +42,13 @@ func Execute(path string) error {
 	errRun := cmd.Wait()
 
 	if errRun != nil {
-		errorMessage := fmt.Sprintf("Git terminated prematurely: %s", errRun)
+		errorMessage := fmt.Sprintf("Python terminated prematurely: %s", errRun)
 		return errors.New(errorMessage)
 	}
 
 	state := cmd.ProcessState
 	if !state.Success() {
-		errorMessage := fmt.Sprintf("Git did not completed sucessfully: %s", state.String())
+		errorMessage := fmt.Sprintf("Python did not completed sucessfully: %s", state.String())
 		return errors.New(errorMessage)
 	}
 

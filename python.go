@@ -9,6 +9,7 @@ import (
 	"os/exec"
 )
 
+//Execute runs python cmd and executes the path supplied
 func Execute(path string) error {
 
 	cmd := exec.Command("python", path)

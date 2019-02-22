@@ -32,7 +32,7 @@ func Execute(path string) error {
 	err := cmd.Start()
 
 	if err != nil {
-		errorMessage := fmt.Sprintf("Unable to start git process: %s", err)
+		errorMessage := fmt.Sprintf("Unable to start python process: %s", err)
 		return errors.New(errorMessage)
 	}
 

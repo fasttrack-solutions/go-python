@@ -10,9 +10,15 @@ import (
 )
 
 //Execute runs python cmd and executes the path supplied
-func Execute(path string) error {
+func Execute(path string, args ...string) error {
 
-	cmd := exec.Command("python", path)
+	cmdArgs := []string{path}
+
+	for _, a := range args {
+		cmdArgs = append(cmdArgs, a)
+	}
+
+	cmd := exec.Command("python", cmdArgs...)
 	cmd.Env = os.Environ()
 
 	stdOut, errPipe := cmd.StdoutPipe()

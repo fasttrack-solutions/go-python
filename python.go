@@ -36,8 +36,8 @@ func Execute(path string) error {
 		return errors.New(errorMessage)
 	}
 
-	copyFromTo(stdOut, os.Stdout)
-	copyFromTo(stdErr, os.Stderr)
+	go copyFromTo(stdOut, os.Stdout)
+	go copyFromTo(stdErr, os.Stderr)
 
 	errRun := cmd.Wait()
 

@@ -9,10 +9,12 @@ import (
 	"os/exec"
 )
 
-//Execute runs python cmd and executes the path supplied
-func Execute(path string) error {
+// Execute runs python cmd and executes the path supplied
+func Execute(path string, args ...string) error {
+	commandArgs := []string{path}
+	commandArgs = append(commandArgs, args...)
 
-	cmd := exec.Command("python", path)
+	cmd := exec.Command("python", commandArgs...)
 	cmd.Env = os.Environ()
 
 	stdOut, errPipe := cmd.StdoutPipe()

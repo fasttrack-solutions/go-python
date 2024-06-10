@@ -9,12 +9,27 @@ import (
 	"os/exec"
 )
 
+type Python struct {
+	Executable string
+}
+
+// NewPython returns a new instance of Python
+func NewPython() *Python {
+	return &Python{
+		Executable: "python",
+	}
+}
+
+func (p *Python) SetExecutable(executable string) {
+	p.Executable = executable
+}
+
 // Execute runs python cmd and executes the path supplied
-func Execute(path string, args ...string) error {
+func (p *Python) Execute(path string, args ...string) error {
 	commandArgs := []string{path}
 	commandArgs = append(commandArgs, args...)
 
-	cmd := exec.Command("python", commandArgs...)
+	cmd := exec.Command(p.Executable, commandArgs...)
 	cmd.Env = os.Environ()
 
 	stdOut, errPipe := cmd.StdoutPipe()

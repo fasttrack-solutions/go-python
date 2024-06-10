@@ -11,6 +11,7 @@ import (
 
 type Python struct {
 	Executable string
+	Env        []string
 }
 
 // NewPython returns a new instance of Python
@@ -31,6 +32,10 @@ func (p *Python) Execute(path string, args ...string) error {
 
 	cmd := exec.Command(p.Executable, commandArgs...)
 	cmd.Env = os.Environ()
+
+	if len(p.Env) > 0 {
+		cmd.Env = append(cmd.Env, p.Env...)
+	}
 
 	stdOut, errPipe := cmd.StdoutPipe()
 

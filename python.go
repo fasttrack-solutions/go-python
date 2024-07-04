@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type Python struct {
@@ -84,6 +85,9 @@ func copyFromTo(r io.Reader, w io.Writer) {
 		_, errOut := writeOrDie(w, r, buf, copy)
 
 		if errOut == io.EOF {
+			return
+		} else if strings.Contains(errOut.Error(), "read |0: file already closed") {
+			log.Println("File already closed")
 			return
 		} else if errOut != nil {
 			log.Fatalf("Unable to read the output with error: %v", errOut)

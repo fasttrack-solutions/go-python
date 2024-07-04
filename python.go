@@ -115,10 +115,12 @@ func copyFromTo(r io.Reader, w io.Writer) {
 
 		if errOut == io.EOF {
 			return
-		} else if strings.Contains(errOut.Error(), "read |0: file already closed") {
-			log.Println("File already closed")
-			return
 		} else if errOut != nil {
+			if strings.Contains(errOut.Error(), "read |0: file already closed") {
+				log.Println("File already closed")
+				return
+			}
+
 			log.Fatalf("Unable to read the output with error: %v", errOut)
 			return
 		}

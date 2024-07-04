@@ -94,7 +94,14 @@ func (p *Python) ExecuteImproved(path string, args ...string) error {
 
 	err := receiveLogsAndErrorsFromPipe(cmd)
 	if err != nil {
-		return err
+		errorMessage := fmt.Sprintf("Python terminated prematurely: %v", err)
+		return errors.New(errorMessage)
+	}
+
+	state := cmd.ProcessState
+	if !state.Success() {
+		errorMessage := fmt.Sprintf("Python did not complete sucessfully: %s", state.String())
+		return errors.New(errorMessage)
 	}
 
 	return nil

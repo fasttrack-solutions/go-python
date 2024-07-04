@@ -86,7 +86,7 @@ func copyFromTo(r io.Reader, w io.Writer) {
 		if errOut == io.EOF {
 			return
 		} else if errOut != nil {
-			log.Fatal("Unable to read the output")
+			log.Fatalf("Unable to read the output with error: %v", errOut)
 			return
 		}
 	}

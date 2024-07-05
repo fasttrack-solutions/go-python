@@ -1,12 +1,12 @@
 package python
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"os/exec"
+	"sync"
 )
 
 type Python struct {
@@ -37,71 +37,65 @@ func (p *Python) Execute(path string, args ...string) error {
 		cmd.Env = append(cmd.Env, p.Env...)
 	}
 
-	stdOut, errPipe := cmd.StdoutPipe()
-
-	if errPipe != nil {
-		errorMessage := fmt.Sprintf("Unable to get the stdoutput for the pipe: %s", errPipe)
-		return errors.New(errorMessage)
-	}
-
-	stdErr, errPipe2 := cmd.StderrPipe()
-
-	if errPipe2 != nil {
-		errorMessage := fmt.Sprintf("Unable to get the stdoutput for the pipe: %s", errPipe2)
-		return errors.New(errorMessage)
-	}
-
-	err := cmd.Start()
-
+	err := receiveLogsAndErrorsFromPipe(cmd)
 	if err != nil {
-		errorMessage := fmt.Sprintf("Unable to start python process: %s", err)
-		return errors.New(errorMessage)
-	}
-
-	go copyFromTo(stdOut, os.Stdout)
-	go copyFromTo(stdErr, os.Stderr)
-
-	errRun := cmd.Wait()
-
-	if errRun != nil {
-		errorMessage := fmt.Sprintf("Python terminated prematurely: %s", errRun)
+		errorMessage := fmt.Sprintf("Python terminated prematurely: %v", err)
 		return errors.New(errorMessage)
 	}
 
 	state := cmd.ProcessState
 	if !state.Success() {
-		errorMessage := fmt.Sprintf("Python did not completed sucessfully: %s", state.String())
+		errorMessage := fmt.Sprintf("Python did not complete sucessfully: %s", state.String())
 		return errors.New(errorMessage)
 	}
 
 	return nil
 }
 
-func copyFromTo(r io.Reader, w io.Writer) {
-	var copy []byte
-	buf := make([]byte, 1024, 1024)
-	for {
-		_, errOut := writeOrDie(w, r, buf, copy)
+func receiveLogsAndErrorsFromPipe(cmd *exec.Cmd) error {
+	rOut, _ := cmd.StdoutPipe()
+	rErr, _ := cmd.StderrPipe()
+	scannerOut := bufio.NewScanner(rOut)
+	scannerErr := bufio.NewScanner(rErr)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-		if errOut == io.EOF {
-			return
-		} else if errOut != nil {
-			log.Fatal("Unable to read the output")
-			return
+	errChan := make(chan string, 1)
+	errLine := ""
+
+	go func() {
+		for scannerOut.Scan() {
+			line := scannerOut.Text()
+			fmt.Println(line)
 		}
-	}
-}
+		wg.Done()
+	}()
 
-func writeOrDie(w io.Writer, r io.Reader, buf []byte, out []byte) ([]byte, error) {
-
-	n, err := r.Read(buf[:])
-	if n > 0 {
-		d := buf[:n]
-		out = append(out, d...)
-		_, err := w.Write(d)
-		if err != nil {
-			return out, err
+	go func() {
+		for scannerErr.Scan() {
+			lineErr := scannerErr.Text()
+			errLine = fmt.Sprintf("%s \n %s", errLine, lineErr)
 		}
+		errChan <- errLine
+		wg.Done()
+	}()
+
+	err := cmd.Start()
+	if err != nil {
+		return err
 	}
-	return out, err
+
+	wg.Wait()
+
+	errPython := <-errChan
+	if errPython != "" {
+		return errors.New(errPython)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
